@@ -7,14 +7,12 @@ set(CMAKE_C_STANDARD_REQUIRED true)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
+#set(CMAKE_VERBOSE_MAKEFILE ON)
 
 add_subdirectory(libcotp)
 
 add_library(tmfa SHARED library.c)
 set_target_properties(tmfa PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-#add_compile_options(-g -O0 -DDEBUG -Wall -Wextra -Wconversion)
 
 include(${CMAKE_CURRENT_LIST_DIR}/FindTCL.cmake)
 
@@ -39,3 +37,4 @@ else ()
     endif()
 endif()
 
+add_compile_options(-g -O0 -DDEBUG -Wall -Wextra -Wconversion)

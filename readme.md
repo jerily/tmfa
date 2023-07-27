@@ -11,7 +11,7 @@ git clone --recurse-submodules https://github.com/jerily/tmfa.git
 cd tmfa
 mkdir build
 cd build
-cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
+cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/usr
 make
 make install
 ```

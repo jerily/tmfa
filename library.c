@@ -15,14 +15,67 @@
                      return TCL_ERROR; \
                  }
 
-typedef int32_t bert_vocab_id;
+#define MIN_DIGITS 4
+#define MAX_DIGITS 10
 
 static int           tmfa_ModuleInitialized;
+
+const char *errors[] = {
+        "NO_ERROR",
+        "VALID",
+        "GCRYPT_VERSION_MISMATCH",
+        "INVALID_B32_INPUT",
+        "INVALID_ALGO",
+        "INVALID_DIGITS",
+        "INVALID_PERIOD",
+        "MEMORY_ALLOCATION_ERROR",
+        "INVALID_USER_INPUT",
+        "EMPTY_STRING",
+        "MISSING_LEADING_ZERO",
+        "INVALID_COUNTER"
+};
 
 static int tmfa_GetTotp(ClientData  clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[] ) {
     DBG(fprintf(stderr,"GetTotpCmd\n"));
 
-    CheckArgs(3,3,1,"handle_name filename");
+    CheckArgs(5,5,1,"base32_encoded_secret digits period algo");
+
+    const char *base32_encoded_secret = Tcl_GetString(objv[1]);
+    int digits = atoi(Tcl_GetString(objv[2]));
+
+    if (digits < MIN_DIGITS || digits > MAX_DIGITS) {
+        Tcl_SetObjResult(interp, Tcl_NewStringObj("digits must be between 6 and 8", -1));
+        return TCL_ERROR;
+    }
+
+    int         period                = atoi(Tcl_GetString(objv[3]));
+
+    if (period <= 0 || period > 120) {
+        Tcl_SetObjResult(interp, Tcl_NewStringObj("period must be between 1 and 120", -1));
+        return TCL_ERROR;
+    }
+
+    const char *algo_str = Tcl_GetString(objv[4]);
+    int algo = strcmp(algo_str, "SHA1") == 0 ? SHA1 : strcmp(algo_str, "SHA256") == 0 ? SHA256 : strcmp(algo_str, "SHA512") == 0 ? SHA512 : -1;
+
+    if (algo == -1) {
+        Tcl_SetObjResult(interp, Tcl_NewStringObj("algo must be SHA1, SHA256 or SHA512", -1));
+        return TCL_ERROR;
+    }
+
+    cotp_error_t err;
+    char *totp = get_totp(
+            base32_encoded_secret,
+            digits,
+            period,
+            algo,
+            &err);
+    if (totp == NULL) {
+        Tcl_SetObjResult(interp, Tcl_NewIntObj((int) err));
+        return TCL_ERROR;
+    }
+
+    Tcl_SetObjResult(interp, Tcl_NewStringObj(totp, -1));
     return TCL_OK;
 }
 
