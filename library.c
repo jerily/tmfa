@@ -2,6 +2,7 @@
 #include "cotp.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #ifdef DEBUG
 # define DBG(x) x
@@ -35,6 +36,10 @@ const char *errors[] = {
         "INVALID_COUNTER"
 };
 
+int get_algo(const char *algo_str) {
+    return strcmp(algo_str, "SHA1") == 0 ? SHA1 : strcmp(algo_str, "SHA256") == 0 ? SHA256 : strcmp(algo_str, "SHA512") == 0 ? SHA512 : -1;
+}
+
 static int tmfa_GetTotp(ClientData  clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[] ) {
     DBG(fprintf(stderr,"GetTotpCmd\n"));
 
@@ -44,7 +49,7 @@ static int tmfa_GetTotp(ClientData  clientData, Tcl_Interp *interp, int objc, Tc
     int digits = atoi(Tcl_GetString(objv[2]));
 
     if (digits < MIN_DIGITS || digits > MAX_DIGITS) {
-        Tcl_SetObjResult(interp, Tcl_NewStringObj("digits must be between 6 and 8", -1));
+        Tcl_SetObjResult(interp, Tcl_NewStringObj("digits must be between 4 and 10", -1));
         return TCL_ERROR;
     }
 
@@ -56,7 +61,7 @@ static int tmfa_GetTotp(ClientData  clientData, Tcl_Interp *interp, int objc, Tc
     }
 
     const char *algo_str = Tcl_GetString(objv[4]);
-    int algo = strcmp(algo_str, "SHA1") == 0 ? SHA1 : strcmp(algo_str, "SHA256") == 0 ? SHA256 : strcmp(algo_str, "SHA512") == 0 ? SHA512 : -1;
+    int algo = get_algo(algo_str);
 
     if (algo == -1) {
         Tcl_SetObjResult(interp, Tcl_NewStringObj("algo must be SHA1, SHA256 or SHA512", -1));
@@ -76,6 +81,51 @@ static int tmfa_GetTotp(ClientData  clientData, Tcl_Interp *interp, int objc, Tc
     }
 
     Tcl_SetObjResult(interp, Tcl_NewStringObj(totp, -1));
+    return TCL_OK;
+}
+
+static int tmfa_GetHotp(ClientData  clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[] ) {
+    DBG(fprintf(stderr,"GetHotpCmd\n"));
+
+    CheckArgs(5,5,1,"secret counter digits algo");
+
+    const char *secret = Tcl_GetString(objv[1]);
+
+    int         counter                = atoi(Tcl_GetString(objv[2]));
+
+//    if (period <= 0 || period > 120) {
+//        Tcl_SetObjResult(interp, Tcl_NewStringObj("period must be between 1 and 120", -1));
+//        return TCL_ERROR;
+//    }
+
+    int digits = atoi(Tcl_GetString(objv[3]));
+
+    if (digits < MIN_DIGITS || digits > MAX_DIGITS) {
+        Tcl_SetObjResult(interp, Tcl_NewStringObj("digits must be between 4 and 10", -1));
+        return TCL_ERROR;
+    }
+
+    const char *algo_str = Tcl_GetString(objv[4]);
+    int algo = get_algo(algo_str);
+
+    if (algo == -1) {
+        Tcl_SetObjResult(interp, Tcl_NewStringObj("algo must be SHA1, SHA256 or SHA512", -1));
+        return TCL_ERROR;
+    }
+
+    cotp_error_t err;
+    char *hotp = get_hotp(
+            secret,
+            counter,
+            digits,
+            algo,
+            &err);
+    if (hotp == NULL) {
+        Tcl_SetObjResult(interp, Tcl_NewIntObj((int) err));
+        return TCL_ERROR;
+    }
+
+    Tcl_SetObjResult(interp, Tcl_NewStringObj(hotp, -1));
     return TCL_OK;
 }
 
@@ -100,6 +150,7 @@ int Tmfa_Init(Tcl_Interp *interp) {
 
     Tcl_CreateNamespace(interp, "::tmfa", NULL, NULL);
     Tcl_CreateObjCommand(interp, "::tmfa::get_totp", tmfa_GetTotp, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "::tmfa::get_hotp", tmfa_GetHotp, NULL, NULL);
 
     return Tcl_PkgProvide(interp, "tmfa", "0.1");
 }

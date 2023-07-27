@@ -37,4 +37,4 @@ else ()
     endif()
 endif()
 
-add_compile_options(-g -O0 -DDEBUG -Wall -Wextra -Wconversion)
+#add_compile_options(-g -O0 -DDEBUG -Wall -Wextra -Wconversion)
