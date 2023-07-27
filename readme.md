@@ -1,4 +1,6 @@
-# TCL/C extension for Multi-Factor Authentication (MFA) using TOTP and HOTP.
+# tmfa
+
+TCL/C extension for Multi-Factor Authentication (MFA) using TOTP and HOTP.
 
 ## Tcl Commands
 ```
