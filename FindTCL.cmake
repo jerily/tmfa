@@ -49,9 +49,10 @@ string(REGEX REPLACE
   "^.*tcl([0-9]\\.*[0-9]).*$" "\\1" TCL_LIBRARY_VERSION "${TCL_LIBRARY}")
 
 set(TCL_POSSIBLE_LIB_PATHS
-  "${TCL_INCLUDE_PATH_PARENT}/lib"
-  "${TCL_LIBRARY_PATH}"
-  "${TCL_TCLSH_PATH_PARENT}/lib"
+        "${NAVISERVER}/lib"
+        "${TCL_INCLUDE_PATH_PARENT}/lib"
+        "${TCL_LIBRARY_PATH}"
+        "${TCL_TCLSH_PATH_PARENT}/lib"
 )
 
 set(TCL_POSSIBLE_LIB_PATH_SUFFIXES
