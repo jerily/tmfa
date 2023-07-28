@@ -32,7 +32,10 @@ else ()
     get_filename_component(TCL_LIBRARY_PATH "${TCL_LIBRARY}" PATH)
     if (TCL_LIBRARY_PATH)
         install(TARGETS ${TARGET}
-            LIBRARY DESTINATION ${TCL_LIBRARY_PATH}
+                LIBRARY DESTINATION ${TCL_LIBRARY_PATH}/${TARGET}
+        )
+        install(FILES pkgIndex.tcl
+                DESTINATION ${TCL_LIBRARY_PATH}/${TARGET}
         )
     endif()
 endif()
