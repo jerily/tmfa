@@ -125,6 +125,53 @@ static int tmfa_GetHotp(ClientData  clientData, Tcl_Interp *interp, int objc, Tc
     return TCL_OK;
 }
 
+static int tmfa_Base32Encode(ClientData  clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[] ) {
+    DBG(fprintf(stderr,"Base32EncodeCmd\n"));
+
+    CheckArgs(2,2,1,"text");
+
+    int len;
+    const char *user_data = Tcl_GetStringFromObj(objv[1], &len);
+
+    cotp_error_t err;
+    char *encoded_data = base32_encode(
+            user_data,
+            len,
+            &err);
+    if (encoded_data == NULL) {
+        Tcl_SetObjResult(interp, Tcl_NewStringObj(errors[(int) err], -1));
+        return TCL_ERROR;
+    }
+
+
+    Tcl_SetObjResult(interp, Tcl_NewStringObj(encoded_data, -1));
+    return TCL_OK;
+}
+
+
+static int tmfa_Base32Decode(ClientData  clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[] ) {
+    DBG(fprintf(stderr,"Base32DecodeCmd\n"));
+
+    CheckArgs(2,2,1,"base32_encoded_text");
+
+    int len;
+    const char *user_data_untrimmed = Tcl_GetStringFromObj(objv[1], &len);
+
+    cotp_error_t err;
+    unsigned char *decoded_data = base32_decode(
+            user_data_untrimmed,
+            len,
+            &err);
+    if (decoded_data == NULL) {
+        Tcl_SetObjResult(interp, Tcl_NewStringObj(errors[(int) err], -1));
+        return TCL_ERROR;
+    }
+
+
+    Tcl_SetObjResult(interp, Tcl_NewStringObj(decoded_data, -1));
+    return TCL_OK;
+}
+
 
 static void tmfa_ExitHandler(ClientData unused) {
 }
@@ -147,6 +194,8 @@ int Tmfa_Init(Tcl_Interp *interp) {
     Tcl_CreateNamespace(interp, "::tmfa", NULL, NULL);
     Tcl_CreateObjCommand(interp, "::tmfa::get_totp", tmfa_GetTotp, NULL, NULL);
     Tcl_CreateObjCommand(interp, "::tmfa::get_hotp", tmfa_GetHotp, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "::tmfa::base32_encode", tmfa_Base32Encode, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "::tmfa::base32_decode", tmfa_Base32Decode, NULL, NULL);
 
     return Tcl_PkgProvide(interp, "tmfa", "0.1");
 }

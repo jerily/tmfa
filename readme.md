@@ -11,6 +11,14 @@ tmfa::get_totp abcdef 6 45 SHA256
 # Generate a HOTP token using the secret.
 # tmfa::get_hotp secret counter digits algo
 tmfa::get_hotp abcdef 0 6 SHA1
+
+# Base32 encode a string.
+# tmfa::base32_encode text
+tmfa::base32_encode something
+
+# Base32 decode a string.
+# tmfa::base32_decode base32_encoded_text
+tmfa::base32_decode [tmfa::base32_encode something]
 ```
 
 ## Install dependencies
