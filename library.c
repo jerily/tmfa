@@ -116,9 +116,10 @@ static int tmfa_GetHotp(ClientData  clientData, Tcl_Interp *interp, int objc, Tc
             algo,
             &err);
     if (hotp == NULL) {
-        Tcl_SetObjResult(interp, Tcl_NewIntObj((int) err));
+        Tcl_SetObjResult(interp, Tcl_NewStringObj(errors[(int) err], -1));
         return TCL_ERROR;
     }
+
 
     Tcl_SetObjResult(interp, Tcl_NewStringObj(hotp, -1));
     return TCL_OK;
