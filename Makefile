@@ -14,4 +14,6 @@ MODOBJS     = library.o
 
 MODLIBS  += -lcotp
 
+CFLAGS += -DUSE_NAVISERVER
+
 include  $(NAVISERVER)/include/Makefile.module
