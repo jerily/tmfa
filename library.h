@@ -4,7 +4,7 @@
 #include <tcl.h>
 
 #ifdef USE_NAVISERVER
-#include <cstdint>
+#include <stdint.h>
 #include "ns.h"
 #endif
 
