@@ -1,11 +1,11 @@
 #ifndef TMFA_LIBRARY_H
 #define TMFA_LIBRARY_H
 
-#include <tcl.h>
-
 #ifdef USE_NAVISERVER
-#include <stdint.h>
 #include "ns.h"
+#include <stdint.h>
+#else
+#include <tcl.h>
 #endif
 
 #ifdef __cplusplus
