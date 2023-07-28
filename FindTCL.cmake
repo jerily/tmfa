@@ -43,23 +43,33 @@ endif()
 
 get_filename_component(TCL_INCLUDE_PATH_PARENT "${TCL_INCLUDE_PATH}" PATH)
 
-get_filename_component(TCL_LIBRARY_PATH "${TCL_LIBRARY}" PATH)
-get_filename_component(TCL_LIBRARY_PATH_PARENT "${TCL_LIBRARY_PATH}" PATH)
-string(REGEX REPLACE
-  "^.*tcl([0-9]\\.*[0-9]).*$" "\\1" TCL_LIBRARY_VERSION "${TCL_LIBRARY}")
+#get_filename_component(TCL_LIBRARY_PATH "${TCL_LIBRARY}" PATH)
+#get_filename_component(TCL_LIBRARY_PATH_PARENT "${TCL_LIBRARY_PATH}" PATH)
+#string(REGEX REPLACE
+#  "^.*tcl([0-9]\\.*[0-9]).*$" "\\1" TCL_LIBRARY_VERSION "${TCL_LIBRARY}")
 
-set(TCL_POSSIBLE_LIB_PATHS
-        "${NAVISERVER}/lib"
-        "${TCL_INCLUDE_PATH_PARENT}/lib"
-        "${TCL_LIBRARY_PATH}"
-        "${TCL_TCLSH_PATH_PARENT}/lib"
-)
+if (NAVISERVER)
+  SET(TCL_POSSIBLE_LIB_PATHS "${NAVISERVER}/lib")
+endif()
+
+if (TCL_INCLUDE_PATH_PARENT)
+  SET(TCL_POSSIBLE_LIB_PATHS "${TCL_POSSIBLE_LIB_PATHS}" "${TCL_INCLUDE_PATH_PARENT}/lib")
+endif()
+
+if (TCL_TCLSH_PATH_PARENT)
+  SET(TCL_POSSIBLE_LIB_PATHS "${TCL_POSSIBLE_LIB_PATHS}" "${TCL_TCLSH_PATH_PARENT}/lib")
+endif()
+
+set(TCL_POSSIBLE_LIB_PATHS ${TCL_POSSIBLE_LIB_PATHS}
+        "/usr/local/lib"
+        "/usr/lib"
+ )
 
 set(TCL_POSSIBLE_LIB_PATH_SUFFIXES
-  lib/tcl/tcl8.7
-  lib/tcl/tcl8.6
-  lib/tcl/tcl8.5
-  lib/tcl/tcl8.4
+        tcl8.7
+        tcl8.6
+        tcl8.5
+        tcl8.4
 )
 
 if(WIN32)
@@ -94,6 +104,7 @@ find_library(TCL_LIBRARY
   tcl80 tcl8.0
   PATHS ${TCL_POSSIBLE_LIB_PATHS}
   PATH_SUFFIXES ${TCL_POSSIBLE_LIB_PATH_SUFFIXES}
+        NO_DEFAULT_PATH
   )
 
 set(TCL_FRAMEWORK_INCLUDES)
