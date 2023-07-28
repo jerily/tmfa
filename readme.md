@@ -23,7 +23,7 @@ tmfa::base32_decode [tmfa::base32_encode something]
 
 ## Install dependencies
 ```
-sudo apt install libgcrypt-dev
+sudo apt install pkg-config libgcrypt-dev
 ```
 
 ## Build the library
