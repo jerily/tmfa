@@ -76,7 +76,7 @@ static int tmfa_GetTotp(ClientData  clientData, Tcl_Interp *interp, int objc, Tc
             algo,
             &err);
     if (totp == NULL) {
-        Tcl_SetObjResult(interp, Tcl_NewIntObj((int) err));
+        Tcl_SetObjResult(interp, Tcl_NewStringObj(errors[(int) err], -1));
         return TCL_ERROR;
     }
 
@@ -92,11 +92,6 @@ static int tmfa_GetHotp(ClientData  clientData, Tcl_Interp *interp, int objc, Tc
     const char *secret = Tcl_GetString(objv[1]);
 
     int         counter                = atoi(Tcl_GetString(objv[2]));
-
-//    if (period <= 0 || period > 120) {
-//        Tcl_SetObjResult(interp, Tcl_NewStringObj("period must be between 1 and 120", -1));
-//        return TCL_ERROR;
-//    }
 
     int digits = atoi(Tcl_GetString(objv[3]));
 
