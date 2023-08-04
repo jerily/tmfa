@@ -38,17 +38,6 @@ make
 make install
 ```
 
-For Naviserver (using cmake)
-```
-git clone --recurse-submodules https://github.com/jerily/tmfa.git
-cd tmfa
-mkdir build
-cd build
-cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/usr -DNAVISERVER=/usr/local/ns
-make
-make install
-```
-
 For Naviserver (using Makefile)
 ```
 git clone --recurse-submodules https://github.com/jerily/tmfa.git
