@@ -30,14 +30,12 @@ else ()
     link_directories(libcotp/build)
     target_link_libraries(tmfa PRIVATE cotp ${TCL_LIBRARY})
     get_filename_component(TCL_LIBRARY_PATH "${TCL_LIBRARY}" PATH)
-    if (TCL_LIBRARY_PATH)
-        install(TARGETS ${TARGET}
-                LIBRARY DESTINATION ${TCL_LIBRARY_PATH}/${TARGET}
-        )
-        install(FILES pkgIndex.tcl
-                DESTINATION ${TCL_LIBRARY_PATH}/${TARGET}
-        )
-    endif()
+    install(TARGETS ${TARGET}
+            LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${TARGET}
+    )
+    install(FILES pkgIndex.tcl
+            DESTINATION $${CMAKE_INSTALL_PREFIX}/lib/${TARGET}
+    )
 endif()
 
 #add_compile_options(-g -O0 -DDEBUG -Wall -Wextra -Wconversion)
