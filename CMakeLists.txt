@@ -8,6 +8,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 #set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DTCL_THREADS")
 
 add_subdirectory(libcotp)
 
