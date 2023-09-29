@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#define XSTR(s) STR(s)
+#define STR(s) #s
+
 #ifdef DEBUG
 # define DBG(x) x
 #else
@@ -197,7 +200,7 @@ int Tmfa_Init(Tcl_Interp *interp) {
     Tcl_CreateObjCommand(interp, "::tmfa::base32_encode", tmfa_Base32Encode, NULL, NULL);
     Tcl_CreateObjCommand(interp, "::tmfa::base32_decode", tmfa_Base32Decode, NULL, NULL);
 
-    return Tcl_PkgProvide(interp, "tmfa", "0.1");
+    return Tcl_PkgProvide(interp, "tmfa", XSTR(PROJECT_VERSION));
 }
 
 #ifdef USE_NAVISERVER

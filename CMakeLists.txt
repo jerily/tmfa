@@ -1,42 +1,44 @@
 cmake_minimum_required(VERSION 3.22.1)
-project(tmfa LANGUAGES CXX C)
+project(tmfa LANGUAGES VERSION 1.0.0 CXX C)
 
 set(TARGET tmfa)
 set(CMAKE_C_STANDARD   11)
 set(CMAKE_C_STANDARD_REQUIRED true)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
 
-#set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DTCL_THREADS")
+set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_C_FLAGS "-DTCL_THREADS -DPROJECT_VERSION=${PROJECT_VERSION} ${CMAKE_C_FLAGS}")
 
-add_subdirectory(libcotp)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+find_package(TCL EXACT 8.6.13 REQUIRED)  # TCL_INCLUDE_PATH TCL_LIBRARY
+find_package (PkgConfig REQUIRED)
+pkg_check_modules (COTP REQUIRED cotp>=2.0.1)
+pkg_check_modules (GCRYPT REQUIRED libgcrypt>=1.10.2)
 
-add_library(tmfa SHARED library.c)
-set_target_properties(tmfa PROPERTIES POSITION_INDEPENDENT_CODE ON)
+message(STATUS "TCL_INCLUDE_PATH: ${TCL_INCLUDE_PATH}")
+message(STATUS "TCL_LIBRARY: ${TCL_LIBRARY}")
+message(STATUS "COTP_INCLUDE_DIRS: ${COTP_INCLUDE_DIRS}")
+message(STATUS "COTP_LIBRARY_DIRS: ${COTP_LIBRARY_DIRS}")
+message(STATUS "GCRYPT_INCLUDE_DIRS: ${GCRYPT_INCLUDE_DIRS}")
+message(STATUS "GCRYPT_LIBRARY_DIRS: ${GCRYPT_LIBRARY_DIRS}")
 
-include(${CMAKE_CURRENT_LIST_DIR}/FindTCL.cmake)
+add_library(${PROJECT_NAME} SHARED library.c)
+set_target_properties(${PROJECT_NAME}
+        PROPERTIES POSITION_INDEPENDENT_CODE ON
+        INSTALL_RPATH_USE_LINK_PATH ON
+)
 
-if (NAVISERVER)
-    include_directories(libcotp/src/ ${NAVISERVER}/include)
-    link_directories(libcotp/build)
-    target_link_directories(tmfa PRIVATE ${NAVISERVER}/lib)
-    target_link_libraries(tmfa PRIVATE cotp ${TCL_LIBRARY} nsd nsthread)
-    target_compile_options(tmfa PRIVATE -DUSE_NAVISERVER)
-    install(TARGETS ${TARGET}
-            LIBRARY DESTINATION ${NAVISERVER}/bin
-    )
-else ()
-    include_directories(libcotp/src/ ${TCL_INCLUDE_PATH})
-    link_directories(libcotp/build)
-    target_link_libraries(tmfa PRIVATE cotp ${TCL_LIBRARY})
-    get_filename_component(TCL_LIBRARY_PATH "${TCL_LIBRARY}" PATH)
-    install(TARGETS ${TARGET}
-            LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${TARGET}
-    )
-    install(FILES pkgIndex.tcl
-            DESTINATION $${CMAKE_INSTALL_PREFIX}/lib/${TARGET}
-    )
-endif()
+include_directories(${COTP_INCLUDE_DIRS} ${GCRYPT_INCLUDE_DIRS} ${TCL_INCLUDE_PATH})
+target_link_directories(${PROJECT_NAME} PRIVATE ${COTP_LIBRARY_DIRS} ${GCRYPT_LIBRARY_DIRS} ${TCL_LIBRARY_PATH})
+target_link_libraries(${PROJECT_NAME} PRIVATE cotp gcrypt ${TCL_LIBRARY})
+get_filename_component(TCL_LIBRARY_PATH "${TCL_LIBRARY}" PATH)
 
-#add_compile_options(-g -O0 -DDEBUG -Wall -Wextra -Wconversion)
+install(TARGETS ${TARGET}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${TARGET}${PROJECT_VERSION}
+)
+
+configure_file(pkgIndex.tcl.in pkgIndex.tcl @ONLY)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${TARGET}${PROJECT_VERSION}
+)
