@@ -50,9 +50,9 @@ make install
 ## Build the library
 For TCL
 ```
-wget https://github.com/jerily/tmfa/archive/refs/tags/v1.0.0.tar.gz
-tar -xzf v1.0.0.tar.gz
-cd tmfa-1.0.0
+wget https://github.com/jerily/tmfa/archive/refs/tags/v1.0.1.tar.gz
+tar -xzf v1.0.1.tar.gz
+cd tmfa-1.0.1
 mkdir build
 cd build
 cmake .. \

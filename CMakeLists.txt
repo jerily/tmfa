@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
-project(tmfa LANGUAGES VERSION 1.0.0 CXX C)
+project(tmfa LANGUAGES VERSION 1.0.1 CXX C)
 
 set(TARGET tmfa)
 set(CMAKE_C_STANDARD   11)
@@ -13,7 +13,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(TCL EXACT 8.6.13 REQUIRED)  # TCL_INCLUDE_PATH TCL_LIBRARY
 find_package (PkgConfig REQUIRED)
 pkg_check_modules (COTP REQUIRED cotp>=2.0.1)
-pkg_check_modules (GCRYPT REQUIRED libgcrypt>=1.10.2)
+pkg_check_modules (GCRYPT REQUIRED libgcrypt>=1.9.4)
 
 message(STATUS "TCL_INCLUDE_PATH: ${TCL_INCLUDE_PATH}")
 message(STATUS "TCL_LIBRARY: ${TCL_LIBRARY}")
