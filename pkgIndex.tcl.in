@@ -1,3 +1,1 @@
-set dir [file dirname [info script]]
-
-package ifneeded tmfa @PROJECT_VERSION@ [list load [file join $dir libtmfa[info sharedlibextension]]]
+package ifneeded tmfa @PROJECT_VERSION@ [list load [file join $dir libtmfa[info sharedlibextension]] Tmfa]

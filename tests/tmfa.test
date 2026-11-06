@@ -1,0 +1,183 @@
+package require tcltest 2
+namespace import ::tcltest::test
+
+# RFC 4226, Appendix D.
+set secret [tmfa::base32_encode 12345678901234567890]
+set counter 0
+foreach expected {755224 287082 359152 969429 338314 254676 287922 162583 399871 520489} {
+    test hotp-rfc-$counter {RFC 4226 token} -body {
+        tmfa::get_hotp $secret $counter 6 SHA1
+    } -result $expected
+    incr counter
+}
+
+# RFC 6238, Appendix B (20-, 32-, and 64-byte keys).
+set keys [dict create \
+    SHA1 [tmfa::base32_encode 12345678901234567890] \
+    SHA256 [tmfa::base32_encode 12345678901234567890123456789012] \
+    SHA512 [tmfa::base32_encode 1234567890123456789012345678901234567890123456789012345678901234]]
+foreach {timestamp sha1 sha256 sha512} {
+    59          94287082 46119246 90693936
+    1111111109  07081804 68084774 25091201
+    1111111111  14050471 67062674 99943326
+    1234567890  89005924 91819424 93441116
+    2000000000  69279037 90698825 38618901
+    20000000000 65353130 77737706 47863826
+} {
+    foreach algo {SHA1 SHA256 SHA512} expected [list $sha1 $sha256 $sha512] {
+        test totp-rfc-$timestamp-$algo {RFC 6238 token} -body {
+            tmfa::get_totp [dict get $keys $algo] 8 30 $algo $timestamp
+        } -result $expected
+    }
+}
+
+# RFC 4648, section 10.
+foreach {bytes encoded} {
+    {} {} f MY====== fo MZXQ==== foo MZXW6===
+    foob MZXW6YQ= fooba MZXW6YTB foobar MZXW6YTBOI======
+} {
+    test base32-encode-$bytes {RFC 4648 encoding} -body {
+        tmfa::base32_encode $bytes
+    } -result $encoded
+    test base32-decode-$bytes {RFC 4648 decoding} -body {
+        tmfa::base32_decode $encoded
+    } -result $bytes
+    test base32-unpadded-$bytes {Case-insensitive unpadded decoding} -body {
+        tmfa::base32_decode [string tolower [string trimright $encoded =]]
+    } -result $bytes
+}
+
+test base32-binary {All byte values, including NUL} -body {
+    set bytes {}
+    for {set i 0} {$i < 256} {incr i} {append bytes [binary format c $i]}
+    expr {$bytes eq [tmfa::base32_decode [tmfa::base32_encode $bytes]]}
+} -result 1
+
+test base32-utf8 {Explicit UTF-8 round trip} -body {
+    set text "Hello \u03bb \u4e16\u754c"
+    set encoded [tmfa::base32_encode [encoding convertto utf-8 $text]]
+    expr {$text eq [encoding convertfrom utf-8 [tmfa::base32_decode $encoded]]}
+} -result 1
+
+set n 0
+foreach input [list A AAA AAAAAA = ======== MY= MY======= MY======AA \
+        M= M! M0 M1 M8 M9 "MY\n" "MY\u0000" "MY\u00ff" MZ MZ====== MZXW MZXW7 MZXW6YR] {
+    test base32-invalid-[incr n] {Reject invalid symbols, lengths, padding and unused bits} -body {
+        tmfa::base32_decode $input
+    } -returnCodes error -result {invalid Base32 input} -errorCode {TMFA BASE32}
+}
+
+test hotp-width {Four and ten digits without overflow} -body {
+    list [tmfa::get_hotp $secret 0 4 SHA1] [tmfa::get_hotp $secret 0 10 SHA1]
+} -result {5224 1284755224}
+
+test totp-boundaries {Time step boundaries and non-default periods} -body {
+    list [tmfa::get_totp $secret 6 30 SHA1 0] \
+        [tmfa::get_totp $secret 6 30 SHA1 29] \
+        [tmfa::get_totp $secret 6 30 SHA1 30] \
+        [tmfa::get_totp $secret 6 120 SHA1 120] \
+        [tmfa::get_totp $secret 6 1 SHA1 1]
+} -result {755224 755224 287082 287082 287082}
+
+test totp-clock {Default timestamp uses current time} -body {
+    set before [clock seconds]
+    set token [tmfa::get_totp $secret 6 30 SHA1]
+    set after [clock seconds]
+    expr {$token eq [tmfa::get_totp $secret 6 30 SHA1 $before] ||
+          $token eq [tmfa::get_totp $secret 6 30 SHA1 $after]}
+} -result 1
+
+set n 0
+foreach value {{} -1 1.5 1x 0x10 18446744073709551616 99999999999999999999999999999} {
+    test hotp-counter-invalid-[incr n] {Reject invalid counters} -body {
+        tmfa::get_hotp $secret $value 6 SHA1
+    } -returnCodes error -errorCode {TMFA INTEGER} -result {counter must be an unsigned 64-bit decimal integer}
+    test totp-timestamp-invalid-$n {Reject invalid timestamps} -body {
+        tmfa::get_totp $secret 6 30 SHA1 $value
+    } -returnCodes error -errorCode {TMFA INTEGER} -result {timestamp must be an unsigned 64-bit decimal integer}
+}
+
+set n 0
+foreach command [list \
+    [list tmfa::get_hotp {} 0 6 SHA1] \
+    [list tmfa::get_totp {} 6 30 SHA1] \
+    [list tmfa::get_hotp M! 0 6 SHA1] \
+    [list tmfa::get_totp M! 6 30 SHA1] \
+    [list tmfa::get_hotp $secret 0 3 SHA1] \
+    [list tmfa::get_hotp $secret 0 11 SHA1] \
+    [list tmfa::get_hotp $secret 0 6x SHA1] \
+    [list tmfa::get_hotp $secret 0 6.0 SHA1] \
+    [list tmfa::get_totp $secret 6 0 SHA1] \
+    [list tmfa::get_totp $secret 6 -1 SHA1] \
+    [list tmfa::get_totp $secret 6 121 SHA1] \
+    [list tmfa::get_totp $secret 6 30x SHA1] \
+    [list tmfa::get_totp $secret 6 999999999999999999999 SHA1] \
+    [list tmfa::get_hotp $secret 0 6 SHA] \
+    [list tmfa::get_hotp $secret 0 6 MD5] \
+    [list tmfa::get_hotp $secret 0 6 "SHA1\u0000"] \
+    [list tmfa::get_totp $secret 6 30 sha1] \
+    [list tmfa::get_totp] [list tmfa::get_hotp] \
+    [list tmfa::base32_encode] [list tmfa::base32_decode] \
+    [list tmfa::get_hotp $secret 0 6 SHA1 extra] \
+    [list tmfa::get_totp $secret 6 30 SHA1 59 extra] \
+    [list tmfa::base32_encode a b] [list tmfa::base32_decode MY a]] {
+    test invalid-arguments-[incr n] {Invalid arguments return a Tcl error} -body {
+        catch $command
+    } -result 1
+}
+
+test hotp-wide-2147483648-SHA1 {Unsigned 64-bit counter; Python hmac reference} -body {
+    tmfa::get_hotp $secret 2147483648 10 SHA1
+} -result 0404197202
+
+test hotp-wide-2147483648-SHA256 {Unsigned 64-bit counter; Python hmac reference} -body {
+    tmfa::get_hotp $secret 2147483648 10 SHA256
+} -result 0337431985
+
+test hotp-wide-2147483648-SHA512 {Unsigned 64-bit counter; Python hmac reference} -body {
+    tmfa::get_hotp $secret 2147483648 10 SHA512
+} -result 0501176053
+
+test hotp-wide-4294967296-SHA1 {Unsigned 64-bit counter; Python hmac reference} -body {
+    tmfa::get_hotp $secret 4294967296 10 SHA1
+} -result 0255999456
+
+test hotp-wide-4294967296-SHA256 {Unsigned 64-bit counter; Python hmac reference} -body {
+    tmfa::get_hotp $secret 4294967296 10 SHA256
+} -result 0717111431
+
+test hotp-wide-4294967296-SHA512 {Unsigned 64-bit counter; Python hmac reference} -body {
+    tmfa::get_hotp $secret 4294967296 10 SHA512
+} -result 0843669221
+
+test hotp-wide-9223372036854775807-SHA1 {Unsigned 64-bit counter; Python hmac reference} -body {
+    tmfa::get_hotp $secret 9223372036854775807 10 SHA1
+} -result 0150181742
+
+test hotp-wide-9223372036854775807-SHA256 {Unsigned 64-bit counter; Python hmac reference} -body {
+    tmfa::get_hotp $secret 9223372036854775807 10 SHA256
+} -result 1369076418
+
+test hotp-wide-9223372036854775807-SHA512 {Unsigned 64-bit counter; Python hmac reference} -body {
+    tmfa::get_hotp $secret 9223372036854775807 10 SHA512
+} -result 1470447857
+
+test hotp-wide-18446744073709551615-SHA1 {Unsigned 64-bit counter; Python hmac reference} -body {
+    tmfa::get_hotp $secret 18446744073709551615 10 SHA1
+} -result 1663094451
+
+test hotp-wide-18446744073709551615-SHA256 {Unsigned 64-bit counter; Python hmac reference} -body {
+    tmfa::get_hotp $secret 18446744073709551615 10 SHA256
+} -result 0027790413
+
+test hotp-wide-18446744073709551615-SHA512 {Unsigned 64-bit counter; Python hmac reference} -body {
+    tmfa::get_hotp $secret 18446744073709551615 10 SHA512
+} -result 1111381515
+
+test hotp-binary {Binary secret including NUL; Python hmac reference} -body {
+    set bytes {}
+    for {set i 0} {$i < 256} {incr i} {append bytes [binary format c $i]}
+    tmfa::get_hotp [tmfa::base32_encode $bytes] 42 8 SHA256
+} -result 33745326
+
+::tcltest::cleanupTests

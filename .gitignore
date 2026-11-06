@@ -4,3 +4,10 @@ build
 models
 *.o
 *.so
+*.a
+*.dylib
+*.dll
+build-*/
+install/
+ttrek-venv/
+ttrek-lock.json
