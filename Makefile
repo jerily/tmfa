@@ -1,19 +1,11 @@
-ifndef NAVISERVER
-    NAVISERVER  = /usr/local/ns
-endif
+NAVISERVER ?= /usr/local/ns
+PKG_CONFIG ?= pkg-config
+MOD = libtmfa.so
+MODOBJS = library.o
 
-#
-# Module name
-#
-MOD      =  libtmfa.so
+TMFA_VERSION := $(shell sed -n 's/^project(tmfa VERSION \([^ ]*\).*/\1/p' CMakeLists.txt)
+CFLAGS += -std=c11 -DUSE_NAVISERVER -DPROJECT_VERSION='"$(TMFA_VERSION)"'
+CFLAGS += $(shell $(PKG_CONFIG) --cflags libcrypto)
+MODLIBS += $(shell $(PKG_CONFIG) --libs libcrypto)
 
-#
-# Objects to build.
-#
-MODOBJS     = library.o
-
-MODLIBS  += -lcotp
-
-CFLAGS += -DUSE_NAVISERVER
-
-include  $(NAVISERVER)/include/Makefile.module
+include $(NAVISERVER)/include/Makefile.module

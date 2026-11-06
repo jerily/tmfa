@@ -1,69 +1,52 @@
 # tmfa
 
-TCL/C extension for Multi-Factor Authentication (MFA) using TOTP and HOTP.
+HOTP, TOTP, and Base32 for Tcl 8.6 and 9.x, using OpenSSL 3.
 
-## Tcl Commands
-```
-# Generate a TOTP token using the secret.
-# tmfa::get_totp base32_encoded_secret digits period algo 
-tmfa::get_totp abcdef 6 45 SHA256
-
-# Generate a HOTP token using the secret.
-# tmfa::get_hotp secret counter digits algo
-tmfa::get_hotp abcdef 0 6 SHA1
-
-# Base32 encode a string.
-# tmfa::base32_encode text
-tmfa::base32_encode something
-
-# Base32 decode a string.
-# tmfa::base32_decode base32_encoded_text
-tmfa::base32_decode [tmfa::base32_encode something]
+```tcl
+package require tmfa 1.1
+set secret [tmfa::base32_encode "12345678901234567890"]
+tmfa::get_hotp $secret 0 6 SHA1
+tmfa::get_totp $secret 6 30 SHA1
+tmfa::get_totp $secret 8 30 SHA1 59
+tmfa::base32_decode $secret
 ```
 
-## Build and install dependencies
+- `get_hotp base32_secret counter digits algo`
+- `get_totp base32_secret digits period algo ?timestamp?`
+- `base32_encode bytes` returns padded Base32 text.
+- `base32_decode text` returns a byte array; padding is optional and either letter case is accepted.
 
-On Linux:
-```bash
-sudo apt install pkg-config libgcrypt-dev
-```
+Both OTP commands require a nonempty Base32 secret, 4–10 digits, and `SHA1`,
+`SHA256`, or `SHA512`. The period is 1–120 seconds. Counters and Unix timestamps
+are unsigned 64-bit decimal integers; TOTP defaults to the current time.
+Tokens are strings with leading zeroes preserved. Encode text as UTF-8 bytes
+with `encoding convertto utf-8` before Base32 encoding it.
 
-On MacOS:
-```bash
-brew install pkg-config libgcrypt
-```
+## Development
 
-Build and install libcotp:
-```bash
-wget https://github.com/paolostivanin/libcotp/archive/refs/tags/v2.0.1.tar.gz
-tar -xzf v2.0.1.tar.gz
-cd libcotp-2.0.1
-# if on MacOS, run the following line:
-# sed -i.orig 's/^add_link_options/#add_link_options/' CMakeLists.txt
-mkdir build
-cd build
-cmake ..
-make
-make install
+Install a C11 compiler, CMake 3.22+, and [ttrek](https://github.com/jerily/ttrek), then:
+
+```sh
+ttrek install -y
+ttrek run -script test
+ttrek run -script demo
 ```
 
-## Build the library
-For TCL
-```
-wget https://github.com/jerily/tmfa/archive/refs/tags/v1.0.1.tar.gz
-tar -xzf v1.0.1.tar.gz
-cd tmfa-1.0.1
-mkdir build
-cd build
-cmake .. \
-  -DTCL_LIBRARY_DIR=/usr/local/lib \
-  -DTCL_INCLUDE_DIR=/usr/local/include
-make
-make install
+The manifest builds and installs the extension into `ttrek-venv`.
+With Tcl development files and OpenSSL 3 already installed:
+
+```sh
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX="$PWD/install"
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
+cmake --install build
 ```
 
-For Naviserver (using Makefile)
-```bash
-make
-make install
-```
+Use `TCL_INCLUDE_DIR`, `TCL_LIBRARY_DIR`, and `OPENSSL_ROOT_DIR` to select dependencies.
+Set `BUILD_SHARED_LIBS=OFF` for embedding; link Tcl and OpenSSL Crypto and register
+`Tmfa_Init`. For NaviServer, run `make NAVISERVER=/path/to/ns` and
+`make NAVISERVER=/path/to/ns install` with OpenSSL's `libcrypto.pc` on `PKG_CONFIG_PATH`.
+
+Tests cover [HOTP](https://www.rfc-editor.org/rfc/rfc4226),
+[TOTP](https://www.rfc-editor.org/rfc/rfc6238), and
+[Base32](https://www.rfc-editor.org/rfc/rfc4648) vectors, binary data, and invalid inputs.

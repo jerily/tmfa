@@ -1,0 +1,58 @@
+{
+  "name": "tmfa",
+  "description": "HOTP, TOTP, and Base32 for Tcl using OpenSSL.",
+  "version": "1.1.0",
+  "scripts": {
+    "test": "sh \"$PROJECT_HOME/bin/run-tcl.sh\" \"$PROJECT_HOME/tests/all.tcl\"",
+    "demo": "sh \"$PROJECT_HOME/bin/run-tcl.sh\" \"$PROJECT_HOME/example.tcl\""
+  },
+  "dependencies": {
+    "openssl": "^3.0.13",
+    "tcl": ">=8.6.14"
+  },
+  "devDependencies": {},
+  "build": {
+    "default": [
+      {
+        "cmd": "cd"
+      },
+      {
+        "cmd": "cmake_config",
+        "options": [
+          {
+            "name": "CMAKE_BUILD_TYPE",
+            "value": "Release"
+          },
+          {
+            "name": "TCL_LIBRARY_DIR",
+            "value": "$INSTALL_DIR/lib"
+          },
+          {
+            "name": "TCL_INCLUDE_DIR",
+            "value": "$INSTALL_DIR/include"
+          },
+          {
+            "name": "OPENSSL_ROOT_DIR",
+            "value": "$INSTALL_DIR"
+          },
+          {
+            "name": "BUILD_SHARED_LIBS",
+            "value": "OFF",
+            "if": "+static"
+          },
+          {
+            "name": "BUILD_TESTING",
+            "value": "ON"
+          }
+        ]
+      },
+      {
+        "cmd": "cmake_make",
+        "parallel": true
+      },
+      {
+        "cmd": "cmake_install"
+      }
+    ]
+  }
+}
