@@ -1,0 +1,16 @@
+package require tcltest
+namespace import ::tcltest::*
+test keyuri-1 {UTF-8 label and issuer, standard parameter names, unpadded secret} -body {
+    ::tmfa::keyuri MZXW6=== totp {a+b@example.com} -issuer {My App} -algorithm sha256
+} -result {otpauth://totp/My%20App:a%2Bb%40example.com?secret=MZXW6&algorithm=SHA256&digits=6&issuer=My%20App&period=30}
+test keyuri-2 {HOTP counter} -body {
+    ::tmfa::keyuri MZXW6 hotp name -counter 0 -digits 8
+} -result {otpauth://hotp/name?secret=MZXW6&algorithm=SHA1&digits=8&counter=0}
+test keyuri-3 {invalid provisioning values} -body {
+    set out {}
+    foreach args {{bad name} {hotp name} {totp a:b} {totp name -digits 7} {totp name -step 0} {totp name -algorithm md5} {totp name -unknown 1}} {
+        lappend out [catch {::tmfa::keyuri MZXW6 {*}$args}]
+    }
+    set out
+} -result {1 1 1 1 1 1 1}
+cleanupTests

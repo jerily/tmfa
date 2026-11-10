@@ -1,7 +1,7 @@
 {
   "name": "tmfa",
   "description": "HOTP, TOTP, and Base32 for Tcl using OpenSSL.",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "scripts": {
     "test": "sh \"$PROJECT_HOME/bin/run-tcl.sh\" \"$PROJECT_HOME/tests/all.tcl\"",
     "demo": "sh \"$PROJECT_HOME/bin/run-tcl.sh\" \"$PROJECT_HOME/example.tcl\""
