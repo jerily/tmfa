@@ -50,3 +50,12 @@ Set `BUILD_SHARED_LIBS=OFF` for embedding; link Tcl and OpenSSL Crypto and regis
 Tests cover [HOTP](https://www.rfc-editor.org/rfc/rfc4226),
 [TOTP](https://www.rfc-editor.org/rfc/rfc6238), and
 [Base32](https://www.rfc-editor.org/rfc/rfc4648) vectors, binary data, and invalid inputs.
+
+`tmfa::keyuri secret type account ?-issuer name? ?-digits 6|8?
+?-algorithm SHA1|SHA256|SHA512? ?-step seconds? ?-counter integer?` (1.1.2)
+produces a standard `otpauth://` provisioning URI. `type` is `totp` (default
+step 30 seconds) or `hotp` (requires counter). Labels and issuer are UTF-8
+percent encoded; secrets are canonical unpadded Base32. Colons/control characters
+in labels are rejected. The generic Tcl manager has no framework dependencies.
+Static/NaviServer embeddings should source `library/manager.tcl` after registering
+the native commands. QR rendering belongs to the caller, e.g. `tqrcodegen`.

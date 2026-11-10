@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
-project(tmfa VERSION 1.1.1 LANGUAGES C)
+project(tmfa VERSION 1.1.2 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -27,6 +27,7 @@ install(TARGETS tmfa
     LIBRARY DESTINATION lib/tmfa${PROJECT_VERSION}
     ARCHIVE DESTINATION lib/tmfa${PROJECT_VERSION}
     RUNTIME DESTINATION lib/tmfa${PROJECT_VERSION})
+install(FILES library/manager.tcl DESTINATION lib/tmfa${PROJECT_VERSION})
 install(FILES library.h DESTINATION include/tmfa)
 if(BUILD_SHARED_LIBS)
     configure_file(pkgIndex.tcl.in pkgIndex.tcl @ONLY)
